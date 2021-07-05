@@ -1,7 +1,21 @@
-ORG 0x7c00
+ORG 0
 BITS 16
 
+jmp 0x7c0:start         ; code segment set to 0x7c0
+
 start:
+    cli                 ; clear interrupts
+
+    mov ax, 0x7c0
+    mov ds, ax          ; data segment set to 0x7c0
+    mov es, ax          ; extra segment set to 0x7c0
+
+    mov ax, 0x00
+    mov ss, ax          ; stack segment set to 0x00
+    mov sp, 0x7c00      ; stack pointer set to 0x7c00
+
+    sti                 ; enable interrupts
+
     mov si, message
     call print
     jmp $
