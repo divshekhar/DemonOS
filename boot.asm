@@ -1,9 +1,16 @@
 ORG 0
 BITS 16
 
-jmp 0x7c0:start         ; code segment set to 0x7c0
+_start:
+    jmp short start     ; short jump (BIOS Parameter Block)
+    nop                 ; nop (NO OPERATION)
+
+times 33 db 0           ; Fills 33 bytes by 0 after short jump (BIOS Parameter Block)
 
 start:
+    jmp 0x7c0:step2     ; code segment set to 0x7c0
+
+step2:
     cli                 ; clear interrupts
 
     mov ax, 0x7c0
