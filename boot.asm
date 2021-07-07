@@ -23,7 +23,22 @@ step2:
 
     sti                 ; enable interrupts
 
-    mov si, message
+    mov ah, 2           ; Read Sector Command
+    mov al, 1           ; One Sector to read
+    mov ch, 0           ; Cylinder low eight bits
+    mov cl, 2           ; Read Sector two
+    mov dh, 0           ; Head number
+    mov bx, buffer
+    int 0x13            ; Hard Drive interrupt (Invoke read command)
+    jc error            ; If the carry flag is set, jump to error label
+
+    mov si, buffer
+    call print
+    
+    jmp $
+
+error:
+    mov si, error_message
     call print
     jmp $
 
@@ -44,8 +59,9 @@ print_char:
     int 0x10
     ret
 
-message: db "Hello World!", 0
-
+error_message: db "Failed to load sector", 0
 
 times 510 - ($-$$) db 0
 dw 0xAA55
+
+buffer:
