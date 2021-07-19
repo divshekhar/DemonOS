@@ -66,26 +66,78 @@ gdt_data:                               ; DS, SS, ES, FS, GS
 gdt_end:
 
 gdt_descriptor:
-    dw gdt_end - gdt_start -1;
+    dw gdt_end - gdt_start - 1;
     dd gdt_start
-
 
 [BITS 32]
 load32:
-    mov ax, DATA_SEG
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov ss, ax
-    mov ebp, 0x00200000
-    mov esp, ebp
+    mov eax, 1
+    mov ecx, 100
+    mov edi, 0x0100000
+    call ata_lba_read
 
-    ; Enabling A20 line
-    in al, 0x92
-    or al, 2
-    out 0x92, al
-    jmp $
+    jmp CODE_SEG:0x0100000
+
+ata_lba_read:
+    mov ebx, eax                        ; Backup the LBA
+    ; SEND the highest 8 bits of the lba to hard disk controller
+    shr eax, 24
+    or eax, 0xE0                        ; Select the master drive
+    mov dx, 0x1F6
+    out dx, al
+    ; FINISHED sending the highest 8 bits of the lba
+
+    ; SEND the total sectors to read
+    mov eax, ecx
+    mov dx, 0x1F2
+    out dx, al
+    ; FINISHED sending the total sectors to read
+
+    ; SEND more bits of the LBA
+    mov eax, ebx                        ; Restore the backup LBA
+    mov dx, 0x1F3
+    out dx, al
+    ; FINISHED sending more bits of the LBA
+
+    ; SEND more bits of the LBA
+    mov dx, 0x1F4
+    mov eax, ebx                        ; Restore the backup LBA
+    shr eax, 8
+    out dx, al
+    ; FINISHED sending more bits of the LBA
+
+    ; SEND Upper 16 bits of the LBA
+    mov dx, 0x1F5
+    mov eax, ebx                        ; Restore the backup LBA
+    shr eax, 16
+    out dx, al
+    ; FINISHED sending upper 16 bits of the LBA
+
+
+    mov dx, 0x1F7
+    mov al, 0x20
+    out dx, al
+
+    ; READ all sectors into memory
+.next_sector:
+    push ecx
+
+; Checking if we need to read
+.try_again:
+    mov dx, 0x1F7
+    in al, dx
+    test al, 8
+    jz .try_again
+
+    ; We need to read 256 words at a time
+    mov ecx, 256
+    mov dx, 0x1F0
+    rep insw
+    pop ecx
+    loop .next_sector
+
+    ; END reading sectors into memory
+    ret
 
 times 510 - ($-$$) db 0
 dw 0xAA55
