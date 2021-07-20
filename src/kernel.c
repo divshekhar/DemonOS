@@ -2,6 +2,7 @@
 #include <stddef.h>
 
 #include "kernel.h"
+#include "idt/idt.h"
 
 uint16_t* video_mem = 0;
 
@@ -59,7 +60,8 @@ void terminal_initialize()
 
 }
 
-void print(const char* str) {
+void print(const char* str) 
+{
     size_t len = strlen(str);
     for(int i=0; i<len;i++) {
         terminal_writechar(str[i],15);
@@ -69,5 +71,8 @@ void print(const char* str) {
 void kernel_main ()
 {
     terminal_initialize();
-    print("Hello DemonOS, Its your new world!");
+    print("Hello DemonOS, Its your new world!\n");
+
+    // INITIALIZE INTERRUPT DESCRIPTOR TABLE
+    idt_init();
 }
