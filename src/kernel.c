@@ -75,4 +75,7 @@ void kernel_main ()
 
     // INITIALIZE INTERRUPT DESCRIPTOR TABLE
     idt_init();
+
+    // Enable Interrupts
+    enable_interrupts();
 }
